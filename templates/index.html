@@ -2,92 +2,243 @@
 <html>
 <head>
     <title>Server Monitor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 50px auto;
-            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 32px 16px;
         }
-        h1 {
-            text-align: center;
-            color: #333;
+
+        header {
+            max-width: 900px;
+            margin: 0 auto 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        .stat {
-            background: white;
-            padding: 20px;
-            margin: 10px 0;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+        header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #f1f5f9;
         }
-        .stat h2 {
-            margin: 0 0 10px 0;
-            color: #555;
+
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 13px;
+            color: #94a3b8;
         }
-        .value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #0066cc;
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
         }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .grid {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .card-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-label .icon { font-size: 14px; }
+
+        .card-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #38bdf8;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .card-sub {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 16px;
+            min-height: 18px;
+        }
+
+        .bar-track {
+            height: 6px;
+            background: #0f172a;
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: #38bdf8;
+            transition: width 0.4s ease, background 0.4s ease;
+            width: 0%;
+        }
+
+        .bar-fill.warn  { background: #f59e0b; }
+        .bar-fill.crit  { background: #ef4444; }
+
+        .network-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .network-row span:first-child { color: #22c55e; }
+        .network-row span:last-child  { color: #38bdf8; }
+
+        footer {
+            max-width: 900px;
+            margin: 24px auto 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        #last-updated {
+            font-size: 12px;
+            color: #475569;
+        }
+
         button {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
-            background: #0066cc;
-            color: white;
-            border: none;
-            border-radius: 5px;
+            padding: 9px 20px;
+            background: #1e40af;
+            color: #bfdbfe;
+            border: 1px solid #2563eb;
+            border-radius: 8px;
             cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.2s;
         }
-        button:hover {
-            background: #0052a3;
-        }
+
+        button:hover { background: #1d4ed8; }
     </style>
 </head>
 <body>
-    <h1>Server Monitor Dashboard</h1>
-    
-    <div class="stat">
-        <h2>CPU Usage</h2>
-        <div class="value" id="cpu">--</div>
+    <header>
+        <h1>Server Monitor</h1>
+        <div class="live-badge">
+            <div class="live-dot"></div>
+            Live &mdash; refreshes every 5s
+        </div>
+    </header>
+
+    <div class="grid">
+        <div class="card">
+            <div class="card-label"><span class="icon">⚡</span> CPU Usage</div>
+            <div class="card-value" id="cpu">--</div>
+            <div class="card-sub" id="cpu-sub">&nbsp;</div>
+            <div class="bar-track"><div class="bar-fill" id="cpu-bar"></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-label"><span class="icon">🧠</span> Memory</div>
+            <div class="card-value" id="memory">--</div>
+            <div class="card-sub" id="memory-sub">&nbsp;</div>
+            <div class="bar-track"><div class="bar-fill" id="memory-bar"></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-label"><span class="icon">💾</span> Disk</div>
+            <div class="card-value" id="disk">--</div>
+            <div class="card-sub" id="disk-sub">&nbsp;</div>
+            <div class="bar-track"><div class="bar-fill" id="disk-bar"></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-label"><span class="icon">🌐</span> Network</div>
+            <div class="card-value" id="network">--</div>
+            <div class="card-sub" id="network-sub">&nbsp;</div>
+            <div class="network-row" id="network-row">
+                <span id="net-sent">&#8593; --</span>
+                <span id="net-recv">&#8595; --</span>
+            </div>
+        </div>
     </div>
-    
-    <div class="stat">
-        <h2>Memory Usage</h2>
-        <div class="value" id="memory">--</div>
-    </div>
-    
-    <div class="stat">
-        <h2>Disk Usage</h2>
-        <div class="value" id="disk">--</div>
-    </div>
-    <div class="stat">
-        <h2>Network Activity</h2>
-        <div class="value" id="network">--</div>
-    </div>
-    
-    <button onclick="refreshStats()">Refresh Now</button>
+
+    <footer>
+        <span id="last-updated">Never updated</span>
+        <button onclick="refreshStats()">Refresh Now</button>
+    </footer>
 
     <script>
+        function setBar(id, pct) {
+            const bar = document.getElementById(id);
+            bar.style.width = pct + '%';
+            bar.className = 'bar-fill' + (pct >= 90 ? ' crit' : pct >= 70 ? ' warn' : '');
+        }
+
         function refreshStats() {
             fetch('/api/stats')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('cpu').innerText = data.cpu + '%';
-                    document.getElementById('memory').innerText = data.memory_used_gb + 'GB / ' + data.memory_total_gb + 'GB (' + data.memory_percent + '%)';
-                    document.getElementById('disk').innerText = data.disk_used_gb + 'GB / ' + data.disk_total_gb + 'GB (' + data.disk_percent + '%)';
-                    document.getElementById('network').innerText = 'Sent: ' + data.network_sent_mb + 'MB | Received: ' + data.network_recv_mb + 'MB';
+                .then(r => r.json())
+                .then(d => {
+                    document.getElementById('cpu').innerText       = d.cpu + '%';
+                    document.getElementById('cpu-sub').innerText   = 'utilization';
+                    setBar('cpu-bar', d.cpu);
+
+                    document.getElementById('memory').innerText      = d.memory_percent + '%';
+                    document.getElementById('memory-sub').innerText  = d.memory_used_gb + ' GB / ' + d.memory_total_gb + ' GB';
+                    setBar('memory-bar', d.memory_percent);
+
+                    document.getElementById('disk').innerText      = d.disk_percent + '%';
+                    document.getElementById('disk-sub').innerText  = d.disk_used_gb + ' GB / ' + d.disk_total_gb + ' GB';
+                    setBar('disk-bar', d.disk_percent);
+
+                    const total = d.network_sent_mb + d.network_recv_mb;
+                    document.getElementById('network').innerText      = total.toFixed(1) + ' MB';
+                    document.getElementById('network-sub').innerText  = 'total since boot';
+                    document.getElementById('net-sent').innerText     = '\u2191 ' + d.network_sent_mb + ' MB';
+                    document.getElementById('net-recv').innerText     = '\u2193 ' + d.network_recv_mb + ' MB';
+
+                    document.getElementById('last-updated').innerText =
+                        'Last updated: ' + new Date().toLocaleTimeString();
                 })
                 .catch(() => {
                     ['cpu', 'memory', 'disk', 'network'].forEach(id => {
-                        document.getElementById(id).innerText = 'Error loading data';
+                        document.getElementById(id).innerText = 'Error';
                     });
                 });
         }
-        
-        // Load stats when page loads
+
         refreshStats();
-        // Auto-refresh every 5 seconds
         setInterval(refreshStats, 5000);
     </script>
 </body>
