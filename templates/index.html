@@ -61,7 +61,7 @@
         <h2>Disk Usage</h2>
         <div class="value" id="disk">--</div>
     </div>
-        <div class="stat">
+    <div class="stat">
         <h2>Network Activity</h2>
         <div class="value" id="network">--</div>
     </div>
@@ -77,6 +77,11 @@
                     document.getElementById('memory').innerText = data.memory_used_gb + 'GB / ' + data.memory_total_gb + 'GB (' + data.memory_percent + '%)';
                     document.getElementById('disk').innerText = data.disk_used_gb + 'GB / ' + data.disk_total_gb + 'GB (' + data.disk_percent + '%)';
                     document.getElementById('network').innerText = 'Sent: ' + data.network_sent_mb + 'MB | Received: ' + data.network_recv_mb + 'MB';
+                })
+                .catch(() => {
+                    ['cpu', 'memory', 'disk', 'network'].forEach(id => {
+                        document.getElementById(id).innerText = 'Error loading data';
+                    });
                 });
         }
         
